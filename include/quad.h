@@ -1,0 +1,21 @@
+#ifndef QUAD_H
+#define QUAD_H
+
+#include "shape.h"  
+#include "vector3f.h"
+
+class Quad : public Shape {
+private:
+    Vector3f origin;
+    Vector3f width;
+    Vector3f height;
+
+
+public:
+    Quad(Vector3f origin_value =  Vector3f(0.0f, 0.0f, -5.0f), Vector3f width = Vector3f(2.0f, 0.0f, 0.0f), Vector3f height = Vector3f(0.0f, 2.0f, 0.0f));
+    Vector3f getOrigin() const;
+    Vector3f getWidth() const;
+    Vector3f getHeight() const;
+};
+
+#endif
