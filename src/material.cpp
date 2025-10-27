@@ -16,3 +16,19 @@ Material::Material(float r_value, float g_value, float b_value, float shininess_
     shininess = shininess_value;
 
 }
+
+float Material::getR() const {
+    return r;
+}
+
+float Material::getG() const {
+    return g;
+}
+
+float Material::getB() const {
+    return b;
+}
+
+float Material::getShininess() const {
+    return shininess;
+}

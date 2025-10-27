@@ -7,7 +7,7 @@ private:
 
 
 public:
-    Vector3f(float x_val, float y_val, float z_val);
+    Vector3f(float x_val = 0.0f, float y_val = 0.0f, float z_val = 0.0f);
     float getX() const;
     float getY() const;
     float getZ() const;

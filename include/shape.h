@@ -11,7 +11,8 @@ private:
 
 public:
     virtual ~Shape() = default;
-    Shape(Material matter);
+    Shape();
+    Shape(Material matter_value);
     virtual bool is_hit(Ray3f ray) const = 0;
     virtual Ray3f reflect(Ray3f ray) const = 0;
     Material getMatter() const;

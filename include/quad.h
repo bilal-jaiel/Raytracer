@@ -12,7 +12,7 @@ private:
 
 
 public:
-    Quad(Vector3f origin_value =  Vector3f(0.0f, 0.0f, -5.0f), Vector3f width = Vector3f(2.0f, 0.0f, 0.0f), Vector3f height = Vector3f(0.0f, 2.0f, 0.0f));
+    Quad(Vector3f origin_value =  Vector3f(0.0f, 0.0f, -5.0f), Vector3f width_value = Vector3f(2.0f, 0.0f, 0.0f), Vector3f height_value = Vector3f(0.0f, 2.0f, 0.0f));
     Vector3f getOrigin() const;
     Vector3f getWidth() const;
     Vector3f getHeight() const;

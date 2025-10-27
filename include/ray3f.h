@@ -10,7 +10,7 @@ private:
 
 
 public:
-    Ray3f(Vector3f origin, Vector3f direction);
+    Ray3f(Vector3f origin_value = Vector3f(0.0f, 0.0f, 0.0f), Vector3f direction_value = Vector3f(0.0f, 0.0f, -1.0f));
     Vector3f getOrigin() const;
     Vector3f getDirection() const;
 };

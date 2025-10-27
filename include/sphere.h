@@ -10,7 +10,7 @@ private:
     Vector3f origin;
 
 public:
-    Sphere(float radius, Vector3f origin);
+    Sphere(float radius_value, Vector3f origin_value);
     float getRadius() const;
     Vector3f getOrigin() const;
 };

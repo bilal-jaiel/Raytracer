@@ -15,6 +15,7 @@ private:
     
 
 public:
+    Scene(Camera camera_value, Shape* shapes_values[3], Ray3f source_value);
     void render(int width, int height, std::string filename);
     Camera getCamera() const;
     Shape* getShapes() const;
