@@ -16,6 +16,7 @@ public:
     Vector3f getOrigin() const;
     Vector3f getWidth() const;
     Vector3f getHeight() const;
+    bool is_hit(Ray3f ray) const override;
 };
 
 #endif
