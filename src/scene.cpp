@@ -17,7 +17,3 @@ Camera Scene::getCamera() const {
 Ray3f Scene::getSource() const {
     return source;
 }
-
-Ray3f Scene::getSource() const {
-    return source;
-}

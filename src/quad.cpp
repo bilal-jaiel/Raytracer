@@ -20,38 +20,47 @@ Vector3f Quad::getHeight() const {
     return height;
 }
 
-bool Quad::is_hit(Ray3f ray) const {
-    //Calcul de la normale au plan via le produit vectoriel
+// La nouvelle signature, prête à être utilisée par le moteur de rendu
+bool Quad::is_hit(const Ray3f& ray, float t_min, float t_max, HitInfo& info) const {
+    // Le calcul de la normale au plan reste identique
     Vector3f N = width.cross(height).normalize();
 
-    //Vérification du dénominateur
+    // Le calcul du dénominateur reste identique
     float denom = ray.getDirection().dot(N);
     if (std::abs(denom) < 1e-6f) {
-        return false; // Rayon parallèle au plan
+        return false; // Rayon parallèle au plan, pas d'intersection
     }
 
-    //Calcul de la distance t de l’intersection
-    Vector3f p0 = origin;
-    float t = (p0 - ray.getOrigin()).dot(N) / denom;
-    if (t <= 1e-6f) {
-        return false; // Intersection derrière l’origine du rayon
+    // Calcul de la distance t de l'intersection avec le plan
+    float t = (origin - ray.getOrigin()).dot(N) / denom;
+
+    // --- CORRECTION CLÉ 1 : Vérification de l'intervalle ---
+    // On vérifie si l'intersection se trouve dans la plage de distance valide.
+    // C'est ici qu'on utilise t_min et t_max.
+    if (t < t_min || t > t_max) {
+        return false; // Intersection trop proche ou trop loin, on l'ignore
     }
 
-    //Calcul du point d’intersection I = O + tD
+    // Le reste du code n'est exécuté que si la distance t est valide
     Vector3f I = ray.getOrigin() + ray.getDirection() * t;
-
-    //Vérifie si le point I est dans les bornes du rectangle
     Vector3f V = I - origin;
 
-    float width_len = width.length();
-    float height_len = height.length();
+    // On vérifie si le point est dans les limites du rectangle
+    // Optimisation : on compare les carrés pour éviter les sqrt() lents
+    float dot_w = V.dot(width);
+    float dot_h = V.dot(height);
+    float width_sq_len = width.dot(width);
+    float height_sq_len = height.dot(height);
 
-    float dist_w = V.dot(width.normalize());
-    float dist_h = V.dot(height.normalize());
+    if (std::abs(dot_w) * 2.0f <= width_sq_len && std::abs(dot_h) * 2.0f <= height_sq_len) {
+        // --- CORRECTION CLÉ 2 : Remplissage de la structure HitInfo ---
+        info.distance = t;
+        info.point = I;
+        info.normal = N;
+        info.material = getMatter(); // Assurez-vous que Shape a 'matter' en 'protected'
 
-    if (std::abs(dist_w) <= width_len / 2 && std::abs(dist_h) <= height_len / 2) {
-        return true; //Le rayon touche le rectangle
+        return true; // C'est un hit valide !
     }
 
-    return false; //Le rayon passe à côté
+    return false; // Le point est sur le plan mais en dehors du rectangle
 }

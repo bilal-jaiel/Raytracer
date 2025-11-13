@@ -13,6 +13,10 @@ Vector3f Vector3f::operator*(float scalar) const {
     return Vector3f(x * scalar, y * scalar, z * scalar);
 }
 
+Vector3f Vector3f::operator/(float scalar) const {
+    return Vector3f(x / scalar, y / scalar, z / scalar);
+}
+
 Vector3f Vector3f::normalize() const {
     float len = length();
     if (len < 1e-8f) return Vector3f(0,0,0);
