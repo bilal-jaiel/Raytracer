@@ -1,8 +1,13 @@
+/**
+ * @file quad.cpp
+ * @brief Implémentation de la classe Quad
+ */
+
 #include "../include/quad.h"
 #include "../include/vector3f.h"
 #include <cmath>
 
-Quad::Quad(Vector3f origin_value, Vector3f width_value, Vector3f height_value) {
+Quad::Quad(Vector3f origin_value, Vector3f width_value, Vector3f height_value, const Material& mat) : Shape(mat) {
     origin = origin_value;
     width = width_value;
     height = height_value;
@@ -20,47 +25,61 @@ Vector3f Quad::getHeight() const {
     return height;
 }
 
-// La nouvelle signature, prête à être utilisée par le moteur de rendu
+/**
+ * @brief Teste l'intersection entre un rayon et le quadrilatère
+ * @param ray Le rayon à tester
+ * @param t_min Distance minimum
+ * @param t_max Distance maximum
+ * @param info Structure à remplir si intersection
+ * @return true si intersection trouvée dans l'intervalle [t_min, t_max]
+ */
 bool Quad::is_hit(const Ray3f& ray, float t_min, float t_max, HitInfo& info) const {
-    // Le calcul de la normale au plan reste identique
+    // Calcul de la normale au plan (produit vectoriel width × height)
     Vector3f N = width.cross(height).normalize();
 
-    // Le calcul du dénominateur reste identique
+    // Calcul du dénominateur (direction du rayon · normale)
     float denom = ray.getDirection().dot(N);
+    
+    // Si le dénominateur est proche de 0, le rayon est parallèle au plan
     if (std::abs(denom) < 1e-6f) {
-        return false; // Rayon parallèle au plan, pas d'intersection
+        return false;
     }
 
     // Calcul de la distance t de l'intersection avec le plan
     float t = (origin - ray.getOrigin()).dot(N) / denom;
 
-    // --- CORRECTION CLÉ 1 : Vérification de l'intervalle ---
-    // On vérifie si l'intersection se trouve dans la plage de distance valide.
-    // C'est ici qu'on utilise t_min et t_max.
+    // Vérification si l'intersection est dans l'intervalle valide
     if (t < t_min || t > t_max) {
-        return false; // Intersection trop proche ou trop loin, on l'ignore
+        return false;
     }
 
-    // Le reste du code n'est exécuté que si la distance t est valide
+    // Calcul du point d'intersection
     Vector3f I = ray.getOrigin() + ray.getDirection() * t;
+    
+    // Vecteur du coin origin vers le point d'intersection
     Vector3f V = I - origin;
 
-    // On vérifie si le point est dans les limites du rectangle
-    // Optimisation : on compare les carrés pour éviter les sqrt() lents
+    // CORRECTION: Projection de V sur les axes width et height
+    // On calcule les coordonnées paramétriques (u, v)
     float dot_w = V.dot(width);
     float dot_h = V.dot(height);
     float width_sq_len = width.dot(width);
     float height_sq_len = height.dot(height);
-
-    if (std::abs(dot_w) * 2.0f <= width_sq_len && std::abs(dot_h) * 2.0f <= height_sq_len) {
-        // --- CORRECTION CLÉ 2 : Remplissage de la structure HitInfo ---
+    
+    // Coordonnées normalisées dans le plan du quad
+    float u = dot_w / width_sq_len;
+    float v = dot_h / height_sq_len;
+    
+    // Le point est dans le rectangle si 0 <= u <= 1 et 0 <= v <= 1
+    if (u >= 0.0f && u <= 1.0f && v >= 0.0f && v <= 1.0f) {
+        // Remplissage de la structure HitInfo
         info.distance = t;
         info.point = I;
         info.normal = N;
-        info.material = getMatter(); // Assurez-vous que Shape a 'matter' en 'protected'
-
-        return true; // C'est un hit valide !
+        info.material = getMatter();
+        
+        return true;
     }
 
-    return false; // Le point est sur le plan mais en dehors du rectangle
+    return false;
 }
