@@ -1,7 +1,7 @@
 /**
  * @file scene.h
- * @brief Classe représentant la scène 3D à renderer
- * @author Votre nom
+ * @brief Déclaration de la classe Scene, responsable de la gestion et du rendu d’une scène 3D
+ * @author Jaiel Bilâl, Kalaivaasan Balakumar
  * @date 2025
  */
 

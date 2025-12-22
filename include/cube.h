@@ -1,7 +1,7 @@
 /**
  * @file cube.h
  * @brief Classe représentant un cube dans la scène 3D
- * @author Votre nom
+ * @author Jaiel Bilâl, Kalaivaasan Balakumar
  * @date 2025
  */
 

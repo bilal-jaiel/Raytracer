@@ -6,7 +6,7 @@
  */
 
 #include "../include/scene.h"
-#include <SDL.h>
+#include <SDL2.h>
 #include <algorithm>
 #include <cmath>
 #include <limits>
