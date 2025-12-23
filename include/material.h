@@ -8,6 +8,8 @@
 #ifndef MATERIAL_H
 #define MATERIAL_H
 
+#include <stdexcept>
+
 /**
  * @class Material
  * @brief Définit les propriétés optiques d'une surface.
