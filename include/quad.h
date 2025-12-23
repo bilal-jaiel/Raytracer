@@ -26,12 +26,12 @@ private:
     Vector3f origin;
 
     /**
-     * @brief Vecteur définissant l'axe et la longueur de la largeur.
+     * @brief Vecteur définissant l'axe de la largeur.
      */
     Vector3f width;
 
     /**
-     * @brief Vecteur définissant l'axe et la longueur de la hauteur.
+     * @brief Vecteur définissant l'axe de la hauteur.
      */
     Vector3f height;
 
@@ -41,7 +41,7 @@ public:
      * @brief Constructeur de la classe Quad.
      *
      * Initialise un quadrilatère. Par défaut, il est placé à une distance de 5 unités
-     * devant la caméra (Z = -5), avec une largeur et une hauteur de 2 unités.
+     * devant la caméra (Z = -5), avec une largeur et une hauteur de 2*2 unités.
      *
      * @param origin_value Position de l'origine du quad (Défaut: 0, 0, -5).
      * @param width_value Vecteur largeur (Défaut: 2, 0, 0).

@@ -1,0 +1,23 @@
+include
+    camera.h        logique : OK    commentaire :   
+    cube.h          logique : OK    commentaire : 
+    hit_info.h      logique : OK    commentaire : 
+    material.h      logique :       commentaire : 
+    quad.h          logique : OK    commentaire : 
+    ray3f.h         logique :       commentaire : 
+    scene.h         logique :       commentaire : 
+    shape.h         logique :       commentaire : 
+    sphere.h        logique :       commentaire : 
+    vector3f.h      logique :       commentaire : 
+
+src
+    camera.cpp      logique :       commentaire : 
+    cube.cpp        logique :       commentaire : 
+    main.cpp        logique :       commentaire : 
+    material.cpp    logique :       commentaire : 
+    quad.cpp        logique :       commentaire : 
+    ray3f.cpp       logique :       commentaire : 
+    scene.cpp       logique :       commentaire : 
+    shape.cpp       logique :       commentaire : 
+    sphere.cpp      logique :       commentaire : 
+    vector3f.cpp    logique :       commentaire : 
