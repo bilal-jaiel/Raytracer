@@ -53,16 +53,21 @@ public:
      * @param position_value Position initiale (Défaut: 0,0,0).
      * @param direction_value Direction du regard (Défaut: 0,0,-1).
      * @param up_value Vecteur indiquant le "haut" global (Défaut: 0,1,0).
+     * @remark La convention choisie est le repère de la main droite (physique) :
+     * - L'axe X positif pointe vers la droite de l'écran.
+     * - L'axe Y positif pointe vers le haut de l'écran.
+     * - L'axe Z positif pointe vers l'utilisateur (sort de l'écran).
+     * Par conséquent, la caméra regarde par défaut vers les Z négatifs (vers l'intérieur de la scène).
      */
     Camera(Vector3f position_value = Vector3f(0.0f, 0.0f, 0.0f), 
            Vector3f direction_value = Vector3f(0.0f, 0.0f, -1.0f),
            Vector3f up_value = Vector3f(0.0f, 1.0f, 0.0f));
 
     /**
-     * @brief Calcule le rayon pour un pixel donné (Optimisé).
-     * 
-     * Utilise les vecteurs pré-calculés 'up' et 'right'.
-     * 
+     *@brief Calcule le rayon pour un pixel donné.
+     * Cette méthode transforme les coordonnées 2D de l'écran en un rayon 3D.
+     * Elle projette un point sur le plan de vue situé devant la caméra en utilisant
+     * le repère local (Forward, Right, Up).
      * @param u Coordonnée horizontale relative du pixel (de -1 à 1).
      * @param v Coordonnée verticale relative du pixel (de -1 à 1).
      * @param aspectRatio Ratio largeur/hauteur de l'image.

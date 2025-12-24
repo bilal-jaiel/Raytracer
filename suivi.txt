@@ -1,5 +1,5 @@
 include
-    camera.h        logique : OK    commentaire :   
+    camera.h        logique : OK    commentaire : OK 
     cube.h          logique : OK    commentaire : 
     hit_info.h      logique : OK    commentaire : 
     material.h      logique : OK    commentaire : 
@@ -12,7 +12,7 @@ include
     sdl_helper.h    logique : OK    commentaire : 
 
 src
-    camera.cpp      logique : OK    commentaire : 
+    camera.cpp      logique : OK    commentaire : OK
     cube.cpp        logique : OK    commentaire : 
     main.cpp        logique : OK    commentaire : 
     material.cpp    logique : OK    commentaire : 
