@@ -1,116 +1,81 @@
 /**
  * @file main.cpp
- * @brief Programme principal du raytracer
- * @author Votre nom
+ * @brief Programme principal du projet PAP - Lancer de rayon
+ * @author Jaiel Bilâl, Kalaivaasan Balakumar
  * @date 2025
  */
 
-#include "../include/scene.h"
-#include "../include/camera.h"
-#include "../include/sphere.h"
-#include "../include/cube.h"
-#include "../include/quad.h"
-#include "../include/material.h"
-#include "../include/vector3f.h"
-#include "../include/ray3f.h"
+#include <iostream>
 #include <vector>
+#include "../include/vector3f.h"
+#include "../include/camera.h"
+#include "../include/scene.h"
+#include "../include/sphere.h"
+#include "../include/quad.h"
+#include "../include/cube.h"
+#include "../include/sdl_helper.h"
 
-/**
- * @brief Point d'entrée du programme
- * @return 0 si succès
- */
-int main() {
-    // Dimensions de l'image
-    const int WIDTH = 800;
-    const int HEIGHT = 600;
-    
-    // Création de la caméra
-    Camera camera(
-        Vector3f(0.0f, 0.0f, 5.0f),      // Position de la caméra
-        Vector3f(0.0f, 0.0f, -1.0f)      // Direction (regarde vers -Z)
-    );
-    
-    // Création de la source de lumière (en haut de la scène)
-    Ray3f lightSource(
-        Vector3f(0.0f, 4.0f, 0.0f),      // Position de la lumière
-        Vector3f(0.0f, -1.0f, 0.0f)      // Direction (vers le bas)
-    );
-    
-    // Création des objets de la scène
-    std::vector<Shape*> objects;
-    
-    // === CRÉATION DE LA BOÎTE (5 quads) ===
-    const float BOX_SIZE = 10.0f;
-    const float HALF_BOX = BOX_SIZE / 2.0f;
-    
-    // Matériaux pour les murs
-    Material wallMaterial(0.7f, 0.7f, 0.7f, 0.1f); // Gris, peu réfléchissant
-    
-    // Mur arrière (Z-)
-    objects.push_back(new Quad(
-        Vector3f(-HALF_BOX, -HALF_BOX, -HALF_BOX),  // Coin bas-gauche
-        Vector3f(BOX_SIZE, 0.0f, 0.0f),             // Largeur (X)
-        Vector3f(0.0f, BOX_SIZE, 0.0f),             // Hauteur (Y)
-        Material(0.8f, 0.3f, 0.3f, 0.1f)            // Mur rouge
-    ));
-    
-    // Mur gauche (X-)
-    objects.push_back(new Quad(
-        Vector3f(-HALF_BOX, -HALF_BOX, -HALF_BOX),
-        Vector3f(0.0f, 0.0f, BOX_SIZE),
-        Vector3f(0.0f, BOX_SIZE, 0.0f),
-        Material(0.3f, 0.8f, 0.3f, 0.1f)            // Mur vert
-    ));
-    
-    // Mur droit (X+)
-    objects.push_back(new Quad(
-        Vector3f(HALF_BOX, -HALF_BOX, HALF_BOX),
-        Vector3f(0.0f, 0.0f, -BOX_SIZE),
-        Vector3f(0.0f, BOX_SIZE, 0.0f),
-        Material(0.3f, 0.3f, 0.8f, 0.1f)            // Mur bleu
-    ));
-    
-    // Plafond (Y+)
-    objects.push_back(new Quad(
-        Vector3f(-HALF_BOX, HALF_BOX, -HALF_BOX),
-        Vector3f(BOX_SIZE, 0.0f, 0.0f),
-        Vector3f(0.0f, 0.0f, BOX_SIZE),
-        Material(0.9f, 0.9f, 0.9f, 0.1f)            // Plafond blanc
-    ));
-    
-    // Sol (Y-)
-    objects.push_back(new Quad(
-        Vector3f(-HALF_BOX, -HALF_BOX, -HALF_BOX),
-        Vector3f(BOX_SIZE, 0.0f, 0.0f),
-        Vector3f(0.0f, 0.0f, BOX_SIZE),
-        Material(0.6f, 0.6f, 0.6f, 0.1f)            // Sol gris
-    ));
-    
-    // === AJOUT D'UNE SPHÈRE ===
-    objects.push_back(new Sphere(
-        1.5f,                                        // Rayon
-        Vector3f(-2.0f, -2.5f, -2.0f),              // Position
-        Material(1.0f, 0.2f, 0.2f, 0.7f)            // Rouge brillant, très réfléchissant
-    ));
-    
-    // === AJOUT D'UN CUBE ===
-    objects.push_back(new Cube(
-        Vector3f(2.0f, -3.0f, -1.0f),               // Centre
-        2.0f,                                        // Taille
-        Material(0.2f, 0.8f, 1.0f, 0.5f)            // Cyan, moyennement réfléchissant
-    ));
-    
-    // Création de la scène
-    Scene scene(camera, objects, lightSource);
-    
-    // Rendu de la scène
-    scene.render(WIDTH, HEIGHT, "Raytracing - ENSIIE PAP");
-    
-    // Libération de la mémoire
-    for (size_t i = 0; i < objects.size(); ++i) {
-        delete objects[i];
+int main(int argc, char* argv[]) {
+    // 1. Configuration de l'image
+    const int width = 800;
+    const int height = 600;
+    const std::string filename = "rendu_final.ppm";
+
+    std::cout << "Initialisation de la scene..." << std::endl;
+
+    // 2. Création de la Caméra
+    // Positionnée à l'extérieur de la boîte (z=8), regardant vers l'intérieur (z=-1)
+    Camera cam(Vector3f(0.0f, 0.0f, 8.0f), Vector3f(0.0f, 0.0f, -1.0f));
+
+    // 3. Création de la Source de Lumière (placée vers le haut de la boîte)
+    // On définit une lumière ponctuelle via l'origine d'un Ray3f
+    Ray3f lightSource(Vector3f(0.0f, 4.5f, 0.0f), Vector3f(0.0f, -1.0f, 0.0f));
+
+    // 4. Initialisation de la Scène
+    Scene scene(cam, lightSource);
+
+    // 5. Création des Matériaux
+    Material matWhite(0.8f, 0.8f, 0.8f, 0.0f);   // Murs mats
+    Material matRed(0.9f, 0.1f, 0.1f, 0.0f);     // Mur rouge
+    Material matGreen(0.1f, 0.9f, 0.1f, 0.0f);   // Mur vert
+    Material matMirror(1.0f, 1.0f, 1.0f, 0.6f);  // Sphère semi-miroir
+    Material matBlue(0.1f, 0.1f, 0.9f, 0.0f);    // Cube bleu
+
+    // 6. Ajout des 5 Quads pour former la boîte (Taille 10x10x10)
+    // Sol
+    scene.addShape(new Quad(Vector3f(0, -5, 0), Vector3f(10, 0, 0), Vector3f(0, 0, 10), matWhite));
+    // Plafond
+    scene.addShape(new Quad(Vector3f(0, 5, 0), Vector3f(10, 0, 0), Vector3f(0, 0, 10), matWhite));
+    // Mur du fond
+    scene.addShape(new Quad(Vector3f(0, 0, -5), Vector3f(10, 0, 0), Vector3f(0, 10, 0), matWhite));
+    // Mur gauche (Rouge)
+    scene.addShape(new Quad(Vector3f(-5, 0, 0), Vector3f(0, 0, 10), Vector3f(0, 10, 0), matRed));
+    // Mur droit (Vert)
+    scene.addShape(new Quad(Vector3f(5, 0, 0), Vector3f(0, 0, 10), Vector3f(0, 10, 0), matGreen));
+
+    // 7. Ajout de la Sphère et du Cube (objets internes)
+    // Une sphère un peu brillante
+    scene.addShape(new Sphere(2.0f, Vector3f(-2.0f, -3.0f, -2.0f), matMirror));
+
+    // Un cube bleu tourné (en utilisant ton constructeur de Cube)
+    // Note : On utilise des vecteurs unitaires pour l'orientation
+    scene.addShape(new Cube(Vector3f(2.0f, -3.5f, 1.0f), 3.0f, matBlue, 
+                            Vector3f(1.0f, 0.0f, 1.0f), Vector3f(0.0f, 1.0f, 0.0f)));
+
+    // 8. Calcul du rendu
+    std::vector<Vector3f> imageBuffer;
+    scene.render(width, height, filename, imageBuffer);
+
+    // 9. Affichage SDL
+    try {
+        SdlHelper sdl(width, height, "Projet PAP - Lancer de Rayon");
+        sdl.draw(imageBuffer);
+        std::cout << "Affichage reussi. Fermez la fenetre pour quitter." << std::endl;
+        sdl.waitForExit();
+    } catch (const std::exception& e) {
+        std::cerr << "Erreur SDL : " << e.what() << std::endl;
+        return 1;
     }
-    objects.clear();
-    
+
     return 0;
 }

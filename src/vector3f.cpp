@@ -13,6 +13,14 @@ Vector3f Vector3f::operator*(float scalar) const {
     return Vector3f(x * scalar, y * scalar, z * scalar);
 }
 
+Vector3f Vector3f::operator*(const Vector3f& other) const {
+    return Vector3f(
+        this->x * other.x,
+        this->y * other.y,
+        this->z * other.z
+    );
+}
+
 Vector3f Vector3f::operator/(float scalar) const {
     return Vector3f(x / scalar, y / scalar, z / scalar);
 }

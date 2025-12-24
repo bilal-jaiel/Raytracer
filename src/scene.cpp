@@ -1,224 +1,214 @@
 /**
  * @file scene.cpp
- * @brief Implémentation de la classe Scene
- * @author Votre nom
+ * @brief Implémentation de la classe Scene (Cœur du Raytracer)
+ * @author Jaiel Bilâl, Kalaivaasan Balakumar
  * @date 2025
  */
 
 #include "../include/scene.h"
-#include <SDL2.h>
-#include <algorithm>
-#include <cmath>
+#include <iostream>
+#include <fstream>
 #include <limits>
+#include <cmath>
+#include <algorithm> // pour std::min, std::max
 
-// Variables globales SDL (encapsulées dans le fichier)
-static SDL_Window* g_window = nullptr;
-static SDL_Renderer* g_renderer = nullptr;
+// Une petite constante pour éviter l'auto-intersection (acné)
+const float EPSILON = 1e-4f;
+const float INFINITY_FLT = std::numeric_limits<float>::max();
 
-Scene::Scene(Camera camera_value, const std::vector<Shape*>& shapes_values, Ray3f source_value) {
-    camera = camera_value;
-    shapes = shapes_values;
-    source = source_value;
+/**
+ * @brief Constructeur de la scène.
+ */
+Scene::Scene(Camera camera_value, Ray3f source_value)
+    : camera(camera_value), source(source_value) {
 }
 
-Camera Scene::getCamera() const {
-    return camera;
-}
-
-const std::vector<Shape*>& Scene::getShapes() const {
-    return shapes;
-}
-
-Ray3f Scene::getSource() const {
-    return source;
-}
-
-bool Scene::initSDL(int width, int height, std::string filename) {
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-        SDL_Log("Erreur SDL_Init: %s", SDL_GetError());
-        return false;
+/**
+ * @brief Destructeur.
+ * Important : Nettoie la mémoire des objets alloués dynamiquement (new).
+ */
+Scene::~Scene() {
+    for (Shape* s : shapes) {
+        delete s;
     }
-    
-    g_window = SDL_CreateWindow(
-        filename.c_str(),
-        SDL_WINDOWPOS_CENTERED,
-        SDL_WINDOWPOS_CENTERED,
-        width, height,
-        SDL_WINDOW_SHOWN
-    );
-    
-    if (!g_window) {
-        SDL_Log("Erreur SDL_CreateWindow: %s", SDL_GetError());
-        SDL_Quit();
-        return false;
-    }
-    
-    g_renderer = SDL_CreateRenderer(g_window, -1, SDL_RENDERER_ACCELERATED);
-    if (!g_renderer) {
-        SDL_Log("Erreur SDL_CreateRenderer: %s", SDL_GetError());
-        SDL_DestroyWindow(g_window);
-        SDL_Quit();
-        return false;
-    }
-    
-    return true;
+    shapes.clear();
 }
 
-void Scene::cleanupSDL() {
-    if (g_renderer) SDL_DestroyRenderer(g_renderer);
-    if (g_window) SDL_DestroyWindow(g_window);
-    SDL_Quit();
+/**
+ * @brief Ajoute un objet à la scène.
+ */
+void Scene::addShape(Shape* shape) {
+    shapes.push_back(shape);
 }
 
-Ray3f Scene::generateRay(int x, int y, int width, int height) {
-    float aspectRatio = static_cast<float>(width) / static_cast<float>(height);
-    float fov = 60.0f;
-    float scale = std::tan(fov * 0.5f * M_PI / 180.0f);
-    
-    Vector3f cameraPos = camera.getPosition();
-    Vector3f cameraDir = camera.getDirection().normalize();
-    Vector3f cameraRight = cameraDir.cross(Vector3f(0.0f, 1.0f, 0.0f)).normalize();
-    Vector3f cameraUp = cameraRight.cross(cameraDir);
-    
-    float px = (2.0f * (x + 0.5f) / width - 1.0f) * aspectRatio * scale;
-    float py = (1.0f - 2.0f * (y + 0.5f) / height) * scale;
-    Vector3f rayDir = (cameraDir + cameraRight * px + cameraUp * py).normalize();
-    
-    return Ray3f(cameraPos, rayDir);
-}
+/**
+ * @brief Teste si un point est dans l'ombre.
+ * 
+ * Lance un rayon depuis le point vers la lumière. Si un objet bloque le chemin,
+ * le point est dans l'ombre.
+ */
+bool Scene::isInShadow(const Vector3f& point) {
+    // 1. Vecteur vers la lumière
+    // On suppose que source.getOrigin() est la position ponctuelle de la lumière
+    Vector3f lightDir = source.getOrigin() - point;
+    float distanceToLight = lightDir.length();
+    Vector3f direction = lightDir.normalize();
 
-bool Scene::isInShadow(const Vector3f& point, const Vector3f& lightPos) {
-    Vector3f toLight = (lightPos - point).normalize();
-    float distToLight = (lightPos - point).length();
+    // 2. Création du "rayon d'ombre"
+    // On décale légèrement le point de départ pour ne pas se cogner soi-même (EPSILON)
+    Ray3f shadowRay(point + (direction * EPSILON), direction);
+
+    HitInfo tempInfo;
     
-    Ray3f shadowRay(point + toLight * 1e-4f, toLight);
-    
-    for (size_t i = 0; i < shapes.size(); ++i) {
-        HitInfo shadowInfo;
-        if (shapes[i]->is_hit(shadowRay, 0.001f, distToLight, shadowInfo)) {
-            return true;
+    // 3. Vérification des intersections
+    for (const auto& shape : shapes) {
+        // On cherche une collision entre 0 et la distance de la lumière
+        if (shape->is_hit(shadowRay, 0.0f, distanceToLight, tempInfo)) {
+            return true; // Un objet bloque la lumière
         }
     }
-    
     return false;
 }
 
-float Scene::calculateLighting(const HitInfo& hit, const Vector3f& lightPos) {
-    Vector3f toLight = (lightPos - hit.point).normalize();
-    float diffuse = std::max(0.0f, hit.normal.dot(toLight));
-    float ambient = 0.2f;
+/**
+ * @brief Calcule l'éclairage local (Lambertian / Diffus).
+ */
+Vector3f Scene::calculateLighting(const HitInfo& hit) {
+    // Couleur ambiante (base minimale de lumière)
+    Vector3f ambient(0.1f, 0.1f, 0.1f);
     
-    if (isInShadow(hit.point, lightPos)) {
-        return ambient;
+    // Si le point est dans l'ombre, on ne renvoie que l'ambiance
+    if (isInShadow(hit.point)) {
+        // On multiplie la couleur de l'objet par l'ambiance
+        return Vector3f(hit.material.getR(), hit.material.getG(), hit.material.getB()) * ambient;
     }
+
+    // Calcul Diffus (Loi de Lambert)
+    Vector3f lightDir = (source.getOrigin() - hit.point).normalize();
     
-    return ambient + 0.8f * diffuse;
+    // Produit scalaire entre la normale et la lumière
+    // max(0, dot) empêche d'éclairer l'objet par l'arrière
+    float diff = std::max(0.0f, hit.normal.dot(lightDir));
+    
+    // Couleur de l'objet
+    Vector3f objectColor(hit.material.getR(), hit.material.getG(), hit.material.getB());
+    
+    // Formule finale : Couleur * (Ambiance + Intensité Diffuse)
+    // On suppose une lumière blanche d'intensité 1.0
+    Vector3f result = objectColor * (ambient + Vector3f(1.0f, 1.0f, 1.0f) * diff);
+
+    return result;
 }
 
+/**
+ * @brief Fonction récursive principale du lancer de rayon.
+ */
 Vector3f Scene::traceRay(const Ray3f& ray, int depth) {
-    const int MAX_DEPTH = 3;
-    const Vector3f BG_COLOR(50.0f, 70.0f, 100.0f);
-    
-    if (depth >= MAX_DEPTH) {
-        return BG_COLOR;
+    // 1. CONDITION D'ARRÊT (Sécurité pour la récursion)
+    if (depth <= 0) {
+        return Vector3f(0.0f, 0.0f, 0.0f); // Noir (on a atteint la limite de rebonds)
     }
-    
-    // Trouver l'intersection la plus proche
+
     HitInfo closestHit;
-    float closestDist = std::numeric_limits<float>::max();
     bool hitAnything = false;
-    
-    for (size_t i = 0; i < shapes.size(); ++i) {
+    float closestSoFar = std::numeric_limits<float>::max();
+
+    // 2. RECHERCHE DE L'INTERSECTION LA PLUS PROCHE
+    for (Shape* shape : shapes) {
         HitInfo tempHit;
-        if (shapes[i]->is_hit(ray, 0.001f, closestDist, tempHit)) {
-            if (tempHit.distance < closestDist) {
-                closestDist = tempHit.distance;
-                closestHit = tempHit;
-                hitAnything = true;
-            }
+        // On utilise un petit epsilon (1e-4) pour éviter l'acné (auto-intersection)
+        if (shape->is_hit(ray, 1e-4f, closestSoFar, tempHit)) {
+            hitAnything = true;
+            closestSoFar = tempHit.distance;
+            closestHit = tempHit;
         }
     }
-    
+
+    // 3. SI LE RAYON NE TOUCHE RIEN
     if (!hitAnything) {
-        return BG_COLOR;
+        return Vector3f(0.1f, 0.1f, 0.2f); // Couleur du "ciel" (bleu très foncé)
     }
-    
-    // Calculer la couleur de base avec éclairage
-    Vector3f lightPos = source.getOrigin();
-    float lighting = calculateLighting(closestHit, lightPos);
-    
-    Vector3f objectColor(
-        closestHit.material.getR() * 255.0f,
-        closestHit.material.getG() * 255.0f,
-        closestHit.material.getB() * 255.0f
-    );
-    
-    Vector3f finalColor = objectColor * lighting;
-    
-    // Gérer la réflexion
-    float shininess = closestHit.material.getShininess();
-    if (shininess > 0.01f) {
-        Vector3f reflectedDir = ray.getDirection() - closestHit.normal * 
-                                (2.0f * ray.getDirection().dot(closestHit.normal));
-        Ray3f reflectedRay(closestHit.point + closestHit.normal * 1e-4f, 
-                           reflectedDir.normalize());
+
+    // 4. CALCUL DE LA LUMIÈRE LOCALE (Diffuse + Ombres)
+    // On appelle la fonction calculateLighting que nous avons définie
+    Vector3f localColor = calculateLighting(closestHit);
+
+    // 5. GESTION DES RÉFLEXIONS (L'effet miroir)
+    float reflectivity = closestHit.material.getShininess(); // Ton coefficient 0 à 1
+
+    if (reflectivity > 0.0f) {
+        // Calculer la direction du rebond : R = D - 2(D.N)N
+        Vector3f incidentDir = ray.getDirection().normalize();
+        Vector3f normal = closestHit.normal;
         
-        Vector3f reflectedColor = traceRay(reflectedRay, depth + 1);
-        finalColor = finalColor * (1.0f - shininess) + reflectedColor * shininess;
+        Vector3f reflectDir = incidentDir - normal * (2.0f * incidentDir.dot(normal));
+        
+        // Créer le rayon réfléchi (on part du point d'impact)
+        // Note : on décale un tout petit peu (epsilon) pour ne pas retoucher l'objet
+        Ray3f reflectedRay(closestHit.point + (normal * 1e-4f), reflectDir.normalize());
+
+        // APPEL RÉCURSIF : on va voir ce que le reflet touche
+        Vector3f reflectedColor = traceRay(reflectedRay, depth - 1);
+
+        // MÉLANGE : On combine la couleur de l'objet et celle du reflet
+        // Exemple : si reflectivity = 0.2, on prend 80% de la couleur locale et 20% du reflet
+        return (localColor * (1.0f - reflectivity)) + (reflectedColor * reflectivity);
     }
-    
-    // Clamper les valeurs
-    return Vector3f(
-        std::min(255.0f, std::max(0.0f, finalColor.getX())),
-        std::min(255.0f, std::max(0.0f, finalColor.getY())),
-        std::min(255.0f, std::max(0.0f, finalColor.getZ()))
-    );
+
+    // Si l'objet n'est pas réfléchi, on renvoie juste sa couleur éclairée
+    return localColor;
 }
 
-void Scene::render(int width, int height, std::string filename) {
-    if (!initSDL(width, height, filename)) {
-        return;
-    }
-    
-    SDL_Log("Rendu en cours... %dx%d pixels", width, height);
-    
-    // Boucle de rendu pixel par pixel
+/**
+ * @brief Boucle principale de rendu.
+ * Génère l'image pixel par pixel et sauvegarde en PPM.
+ */
+void Scene::render(int width, int height, const std::string& filename, std::vector<Vector3f>& imageBuffer) {
+    imageBuffer.resize(width * height);
+    float aspectRatio = (float)width / (float)height;
+
+    std::cout << "Debut du rendu..." << std::endl;
+
+    // Boucle sur chaque pixel
     for (int y = 0; y < height; ++y) {
-        if (y % 50 == 0) {
-            SDL_Log("Progression: %.1f%%", (float)y / height * 100.0f);
-        }
-        
         for (int x = 0; x < width; ++x) {
-            Ray3f ray = generateRay(x, y, width, height);
-            Vector3f color = traceRay(ray, 0);
             
-            SDL_SetRenderDrawColor(g_renderer, 
-                static_cast<Uint8>(color.getX()),
-                static_cast<Uint8>(color.getY()),
-                static_cast<Uint8>(color.getZ()),
-                255
-            );
-            SDL_RenderDrawPoint(g_renderer, x, y);
+            // Conversion coordonnées pixel (x,y) vers coordonnées normalisées (u,v) de -1 à 1
+            float u = (2.0f * (float)(x + 0.5f) / (float)width) - 1.0f;
+            // On inverse Y car en image 0 est en haut, en 3D souvent en bas
+            float v = 1.0f - (2.0f * (float)(y + 0.5f) / (float)height);
+
+            // Génération du rayon
+            Ray3f ray = camera.getRay(u, v, aspectRatio);
+
+            // Lancer du rayon (Max 5 rebonds)
+            Vector3f pixelColor = traceRay(ray, 5);
+
+            // Stockage dans le buffer (pour SDL plus tard)
+            // On clamp les valeurs entre 0 et 1 pour la sécurité
+            float r = std::min(1.0f, std::max(0.0f, pixelColor.getX()));
+            float g = std::min(1.0f, std::max(0.0f, pixelColor.getY()));
+            float b = std::min(1.0f, std::max(0.0f, pixelColor.getZ()));
+
+            imageBuffer[y * width + x] = Vector3f(r, g, b);
         }
     }
     
-    SDL_Log("Rendu terminé !");
-    SDL_RenderPresent(g_renderer);
-    
-    // Boucle d'événements
-    bool quit = false;
-    SDL_Event event;
-    SDL_Log("Appuyez sur ESC ou fermez la fenêtre pour quitter");
-    
-    while (!quit) {
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT) quit = true;
-            if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE) {
-                quit = true;
-            }
+    std::cout << "Rendu termine. Sauvegarde dans " << filename << "..." << std::endl;
+
+    // Sauvegarde au format PPM (Portable Pixel Map) - Format texte simple
+    std::ofstream file(filename);
+    if (file.is_open()) {
+        file << "P3\n" << width << " " << height << "\n255\n";
+        for (const auto& pixel : imageBuffer) {
+            int ir = static_cast<int>(pixel.getX() * 255.99f);
+            int ig = static_cast<int>(pixel.getY() * 255.99f);
+            int ib = static_cast<int>(pixel.getZ() * 255.99f);
+            file << ir << " " << ig << " " << ib << "\n";
         }
-        SDL_Delay(16);
+        file.close();
+        std::cout << "Sauvegarde terminee." << std::endl;
+    } else {
+        std::cerr << "Erreur: Impossible de creer le fichier " << filename << std::endl;
     }
-    
-    cleanupSDL();
 }

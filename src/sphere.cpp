@@ -2,9 +2,8 @@
 #include "../include/vector3f.h"
 #include <cmath>
 
-Sphere::Sphere(float radius_value, Vector3f origin_value, const Material& mat) : Shape(mat) {
-    radius = radius_value;
-    origin = origin_value;
+Sphere::Sphere(float radius_value, Vector3f origin_value, const Material& mat) 
+    : Shape(mat), radius(radius_value), origin(origin_value) {
 }
 
 float Sphere::getRadius() const {
