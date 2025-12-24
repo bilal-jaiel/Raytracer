@@ -1,0 +1,2 @@
+Pour lancer le code, place toi dans le dossier src puis lance la commande suivante :
+g++ -g -Wall -Wextra -I../include -o prog *.cpp -lmingw32 -lSDL2main -lSDL2

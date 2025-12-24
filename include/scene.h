@@ -1,6 +1,6 @@
 /**
  * @file scene.h
- * @brief Déclaration de la classe Scene, responsable de la gestion et du rendu d’une scène 3D
+ * @brief Déclaration de la classe Scene qui stocke les objets et calcule la couleur de chaque pixel (Raytracing).
  * @author Jaiel Bilâl, Kalaivaasan Balakumar
  * @date 2025
  */
@@ -14,97 +14,71 @@
 #include "shape.h"
 #include "ray3f.h"
 
-/**
- * @class Scene
- * @brief Gère la scène 3D, les objets et le rendu
- */
 class Scene {
 private:
     Camera camera;
+    
+    // On garde les pointeurs bruts comme tu as choisi (plus simple)
     std::vector<Shape*> shapes;
+    
+    // La source de lumière
     Ray3f source;
     
     /**
-     * @brief Initialise SDL et crée la fenêtre
-     * @param width Largeur de la fenêtre
-     * @param height Hauteur de la fenêtre
-     * @param filename Titre de la fenêtre
-     * @return true si l'initialisation réussit
-     */
-    bool initSDL(int width, int height, std::string filename);
-    
-    /**
-     * @brief Trace un rayon et calcule sa couleur
-     * @param ray Le rayon à tracer
-     * @param depth Profondeur de récursion (pour les réflexions)
-     * @return La couleur résultante
+     * @brief Trace un rayon dans la scène
+     * @param ray Le rayon à lancer
+     * @param depth Nombre de rebonds restants (pour la réflexion)
+     * @return La couleur finale du pixel (RGB)
      */
     Vector3f traceRay(const Ray3f& ray, int depth);
     
     /**
-     * @brief Calcule l'éclairage d'un point
-     * @param hit Information sur l'intersection
-     * @param lightPos Position de la lumière
-     * @return Intensité de l'éclairage (0-1)
+     * @brief Calcule la couleur due à l'éclairage
+     * @note Utilise 'this->source' pour la position de la lumière
+     * @param hit L'info sur le point d'impact (position, normale...)
+     * @return La couleur calculée
      */
-    float calculateLighting(const HitInfo& hit, const Vector3f& lightPos);
+    Vector3f calculateLighting(const HitInfo& hit);
     
     /**
-     * @brief Vérifie si un point est dans l'ombre
-     * @param point Point à tester
-     * @param lightPos Position de la lumière
+     * @brief Teste si un point est caché de la lumière par un autre objet
+     * @param point Le point à tester (décalé légèrement pour éviter l'acné)
      * @return true si le point est dans l'ombre
      */
-    bool isInShadow(const Vector3f& point, const Vector3f& lightPos);
-    
-    /**
-     * @brief Génère un rayon pour un pixel donné
-     * @param x Coordonnée x du pixel
-     * @param y Coordonnée y du pixel
-     * @param width Largeur de l'image
-     * @param height Hauteur de l'image
-     * @return Le rayon généré
-     */
-    Ray3f generateRay(int x, int y, int width, int height);
-    
-    /**
-     * @brief Nettoie les ressources SDL
-     */
-    void cleanupSDL();
+    bool isInShadow(const Vector3f& point);
 
 public:
     /**
-     * @brief Constructeur de la scène
-     * @param camera_value Caméra de la scène
-     * @param shapes_values Vecteur d'objets de la scène
-     * @param source_value Source de lumière
+     * @brief Constructeur
+     * @param camera_value La caméra
+     * @param source_value La lumière
      */
-    Scene(Camera camera_value, const std::vector<Shape*>& shapes_values, Ray3f source_value);
+    Scene(Camera camera_value, Ray3f source_value);
+
+    /**
+     * @brief Destructeur. Libère la mémoire de tous les objets dans 'shapes'.
+     */
+    ~Scene();
     
     /**
-     * @brief Génère et affiche le rendu de la scène
-     * @param width Largeur de l'image
-     * @param height Hauteur de l'image
-     * @param filename Nom du fichier/titre de la fenêtre
+     * @brief Ajoute un objet à la scène
+     * @param shape Un pointeur vers l'objet (créé avec new)
      */
-    void render(int width, int height, std::string filename);
+    void addShape(Shape* shape);
     
     /**
-     * @brief Accesseur pour la caméra
-     * @return La caméra de la scène
+     * @brief Lance le calcul de l'image ET sauvegarde le résultat dans un fichier.
+     * 
+     * @param width Largeur de l'image (taille de la grille)
+     * @param height Hauteur de l'image (taille de la grille)
+     * @param filename Nom du fichier de sortie (ex: "image.ppm")
+     * @param imageBuffer Référence vers le buffer pour qu'il soit aussi utilisable par SDL plus tard
      */
+    void render(int width, int height, const std::string& filename, std::vector<Vector3f>& imageBuffer);
+    
+    // Accesseurs
     Camera getCamera() const;
-    
-    /**
-     * @brief Accesseur pour les objets
-     * @return Référence constante au vecteur d'objets
-     */
     const std::vector<Shape*>& getShapes() const;
-    
-    /**
-     * @brief Accesseur pour la source de lumière
-     * @return La source de lumière
-     */
     Ray3f getSource() const;
 };
 

@@ -73,6 +73,13 @@ public:
     Vector3f operator*(float scalar) const;
 
     /**
+     * @brief Multiplication d'Hadamard par un vecteur.
+     * @param other Le vacteur par lequel multiplier le vecteur d'origine.
+     * @return Vector3f Le vecteur mis à l'échelle.
+     */
+    Vector3f operator*(const Vector3f& other) const;
+
+    /**
      * @brief Division par un scalaire.
      * @param scalar Le nombre par lequel diviser le vecteur.
      * @return Vector3f Le vecteur réduit.

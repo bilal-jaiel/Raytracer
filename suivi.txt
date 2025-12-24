@@ -5,21 +5,23 @@ include
     material.h      logique : OK    commentaire : 
     quad.h          logique : OK    commentaire : 
     ray3f.h         logique : OK    commentaire : 
-    scene.h         logique :       commentaire : 
-    shape.h         logique :       commentaire : 
-    sphere.h        logique :       commentaire : 
-    vector3f.h      logique :       commentaire : 
+    scene.h         logique : OK    commentaire : 
+    shape.h         logique : OK    commentaire : 
+    sphere.h        logique : OK    commentaire : 
+    vector3f.h      logique : OK    commentaire : 
+    sdl_helper.h    logique : OK    commentaire : 
 
 src
     camera.cpp      logique : OK    commentaire : 
     cube.cpp        logique : OK    commentaire : 
-    main.cpp        logique :       commentaire : 
+    main.cpp        logique : OK    commentaire : 
     material.cpp    logique : OK    commentaire : 
     quad.cpp        logique : OK    commentaire : 
     ray3f.cpp       logique : OK    commentaire : 
-    scene.cpp       logique :       commentaire : 
-    shape.cpp       logique :       commentaire : 
-    sphere.cpp      logique :       commentaire : 
-    vector3f.cpp    logique :       commentaire : 
+    scene.cpp       logique : OK    commentaire : 
+    shape.cpp       logique : OK    commentaire : 
+    sphere.cpp      logique : OK    commentaire : 
+    vector3f.cpp    logique : OK    commentaire : 
+    sdl_helper.cpp  logique : OK    commentaire : 
 
-******oooooooooooooo 27%/100%
+**********oooooooooo 50%/100%

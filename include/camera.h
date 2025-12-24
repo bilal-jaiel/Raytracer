@@ -9,50 +9,92 @@
 #define CAMERA_H
 
 #include "vector3f.h"
+#include "ray3f.h"
 
 /**
  * @class Camera
  * @brief Représente une caméra virtuelle dans un espace 3D.
  *
- * Cette classe gère la position et l'orientation (direction) de la caméra
- * pour le rendu de la scène.
+ * Cette classe gère la position et l'orientation de la caméra.
+ * Elle pré-calcule un repère local orthonormé (Forward, Up, Right) lors de la construction
+ * pour optimiser la génération des rayons.
  */
 class Camera {
 private:
     /**
-     * @brief Position de la caméra dans l'espace.
+     * @brief Position de l'œil de la caméra dans l'espace.
      */
     Vector3f position;
 
     /**
-     * @brief Direction vers laquelle la caméra regarde.
+     * @brief Vecteur direction (Forward) normalisé.
      */
     Vector3f direction;
 
+    /**
+     * @brief Vecteur "Haut" (Up) du repère local de la caméra.
+     * Recalculé pour être parfaitement perpendiculaire à la direction.
+     */
+    Vector3f up;
+
+    /**
+     * @brief Vecteur "Droite" (Right) du repère local de la caméra.
+     * Calculé par produit vectoriel (Direction ^ Up_Monde).
+     */
+    Vector3f right;
 
 public:
     /**
      * @brief Constructeur de la caméra.
      *
-     * Initialise la caméra. Par défaut, on la place à l'origine du repère
-     * et on la fait pointer vers l'avant selon la règle de la main droite (Z négatif).
+     * Initialise la position et l'orientation. Le constructeur calcule automatiquement
+     * les vecteurs 'right' et 'up' finaux pour former un repère orthonormé.
      *
-     * @param position_value La position initiale de la caméra (Défaut: 0,0,0).
-     * @param direction_value Le vecteur direction de la vue (Défaut: 0,0,-1).
+     * @param position_value Position initiale (Défaut: 0,0,0).
+     * @param direction_value Direction du regard (Défaut: 0,0,-1).
+     * @param up_value Vecteur indiquant le "haut" global (Défaut: 0,1,0).
      */
-    Camera(Vector3f position_value = Vector3f(0.0f, 0.0f, 0.0f), Vector3f direction_value = Vector3f(0.0f, 0.0f, -1.0f));
+    Camera(Vector3f position_value = Vector3f(0.0f, 0.0f, 0.0f), 
+           Vector3f direction_value = Vector3f(0.0f, 0.0f, -1.0f),
+           Vector3f up_value = Vector3f(0.0f, 1.0f, 0.0f));
+
+    /**
+     * @brief Calcule le rayon pour un pixel donné (Optimisé).
+     * 
+     * Utilise les vecteurs pré-calculés 'up' et 'right'.
+     * 
+     * @param u Coordonnée horizontale relative du pixel (de -1 à 1).
+     * @param v Coordonnée verticale relative du pixel (de -1 à 1).
+     * @param aspectRatio Ratio largeur/hauteur de l'image.
+     * @return Ray3f Le rayon partant de l'œil vers ce pixel.
+     */
+    Ray3f getRay(float u, float v, float aspectRatio) const;
+
+    // Accesseurs
 
     /**
      * @brief Accesseur pour la position.
-     * @return Vector3f La position actuelle de la caméra.
+     * @return Vector3f La position actuelle.
      */
     Vector3f getPosition() const;
 
     /**
      * @brief Accesseur pour la direction.
-     * @return Vector3f Le vecteur direction actuel de la caméra.
+     * @return Vector3f Le vecteur direction normalisé.
      */
     Vector3f getDirection() const;
+    
+    /**
+     * @brief Accesseur pour le vecteur Up local.
+     * @return Vector3f Le vecteur haut recalculé.
+     */
+    Vector3f getUp() const;
+
+    /**
+     * @brief Accesseur pour le vecteur Right local.
+     * @return Vector3f Le vecteur droite calculé.
+     */
+    Vector3f getRight() const;
 };
 
 #endif
