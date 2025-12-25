@@ -1,55 +1,78 @@
+/**
+ * @file sphere.cpp
+ * @brief Implémentation de la classe Sphere
+ * @author Jaiel Bilâl, Kalaivaasan Balakumar
+ * @date 2025
+ */
+
 #include "../include/sphere.h"
 #include "../include/vector3f.h"
 #include <cmath>
 
+/**
+ * @brief Constructeur de la sphère.
+ * @param radius_value Rayon.
+ * @param origin_value Centre.
+ * @param mat Matériau.
+ */
 Sphere::Sphere(float radius_value, Vector3f origin_value, const Material& mat) 
     : Shape(mat), radius(radius_value), origin(origin_value) {
 }
 
+/** @return Le rayon de la sphère. */
 float Sphere::getRadius() const {
     return radius;
 }
 
+/** @return Le centre de la sphère. */
 Vector3f Sphere::getOrigin() const {
     return origin;
 }
 
-// La nouvelle signature, prête à être utilisée par le moteur de rendu
+/**
+ * @brief Teste l'intersection rayon-sphère via une équation du second degré.
+ * @param ray Le rayon incident.
+ * @param t_min Distance minimale.
+ * @param t_max Distance maximale.
+ * @param info Structure de résultat.
+ * @return true si intersection.
+ */
 bool Sphere::is_hit(const Ray3f& ray, float t_min, float t_max, HitInfo& info) const {
+    // Vecteur entre l'origine du rayon et le centre de la sphère
     Vector3f OC = ray.getOrigin() - this->origin;
 
+    // Coefficients de l'équation : at² + bt + c = 0
     float a = ray.getDirection().dot(ray.getDirection());
     float b = 2.0f * OC.dot(ray.getDirection());
     float c = OC.dot(OC) - radius * radius;
 
+    // Calcul du discriminant
     float discriminant = b * b - 4 * a * c;
 
+    // Pas de solution réelle = le rayon passe à côté
     if (discriminant < 0.0f) {
-        return false; // Aucune intersection réelle
+        return false;
     }
 
     float sqrt_disc = std::sqrt(discriminant);
 
-    // --- CORRECTION CLÉ 1 : Vérification de l'intervalle pour les deux solutions ---
-    // On cherche la plus petite solution 'root' qui est dans l'intervalle [t_min, t_max]
-    
-    // Teste la première solution (la plus proche, t1)
+    // On cherche la racine la plus proche (t1) dans l'intervalle valide
     float root = (-b - sqrt_disc) / (2.0f * a);
     if (root < t_min || root > t_max) {
-        // La première solution n'est pas valide, on teste la seconde (t2)
+        // Sinon on teste la racine plus éloignée (t2)
         root = (-b + sqrt_disc) / (2.0f * a);
         if (root < t_min || root > t_max) {
-            return false; // La seconde n'est pas valide non plus
+            return false;
         }
     }
 
-    // Si on arrive ici, c'est que 'root' contient une distance d'intersection valide.
-
-    // --- CORRECTION CLÉ 2 : Remplissage de la structure HitInfo ---
+    // Enregistrement des données de l'impact
     info.distance = root;
     info.point = ray.getOrigin() + ray.getDirection() * info.distance;
-    info.normal = (info.point - this->origin) / radius; // Pour une sphère, (P-C)/r donne la normale
-    info.material = getMatter(); // On copie le matériau de la sphère
+    
+    // La normale est le vecteur partant du centre vers le point d'impact
+    info.normal = (info.point - this->origin) / radius;
+    info.material = getMatter();
 
-    return true; // C'est un hit valide !
+    return true;
 }

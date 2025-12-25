@@ -10,87 +10,76 @@
 #include <cmath>
 
 /**
- * @brief Constructeur de la classe Quad.
- * 
- * @param origin_value Le point central du quadrilatère.
- * @param width_value Le vecteur représentant la largeur totale.
- * @param height_value Le vecteur représentant la hauteur totale.
- * @param mat Le matériau de la surface.
+ * @brief Constructeur du quadrilatère.
+ * @param origin_value Point central.
+ * @param width_value Vecteur largeur.
+ * @param height_value Vecteur hauteur.
+ * @param mat Matériau.
  */
 Quad::Quad(Vector3f origin_value, Vector3f width_value, Vector3f height_value, const Material& mat) : 
     Shape(mat), origin(origin_value), width(width_value), height(height_value) {
 }
 
+/** @return Le point central du quad. */
 Vector3f Quad::getOrigin() const {
     return origin;
 }
 
+/** @return Le vecteur définissant la largeur. */
 Vector3f Quad::getWidth() const {
     return width;
 }
 
+/** @return Le vecteur définissant la hauteur. */
 Vector3f Quad::getHeight() const {
     return height;
 }
 
 /**
- * @brief Teste l'intersection entre un rayon et le quadrilatère.
- * 
- * L'origine du Quad est considérée comme étant son CENTRE.
- * 
- * @param ray Le rayon à tester.
- * @param t_min Distance minimum valide.
- * @param t_max Distance maximum valide.
- * @param info Structure à remplir si intersection.
- * @return true si intersection trouvée dans l'intervalle [t_min, t_max].
+ * @brief Teste l'intersection rayon-quad.
+ * @param ray Le rayon incident.
+ * @param t_min Distance minimale.
+ * @param t_max Distance maximale.
+ * @param info Structure de résultat.
+ * @return true si intersection.
  */
 bool Quad::is_hit(const Ray3f& ray, float t_min, float t_max, HitInfo& info) const {
-    // Calcul de la normale au plan (produit vectoriel width × height)
+    // Normale calculée par produit vectoriel des axes
     Vector3f N = width.cross(height).normalize();
 
-    // Calcul du dénominateur (direction du rayon · normale)
+    // Vérifie si le rayon n'est pas parallèle à la face
     float denom = ray.getDirection().dot(N);
-    
-    // Si le dénominateur est proche de 0, le rayon est parallèle au plan
     if (std::abs(denom) < 1e-6f) {
         return false;
     }
 
-    // Calcul de la distance t de l'intersection avec le plan
-    // L'équation du plan passe par 'origin' (qui est le centre ici)
+    // Distance d'intersection avec le plan infini
     float t = (origin - ray.getOrigin()).dot(N) / denom;
 
-    // Vérification si l'intersection est dans l'intervalle valide
+    // Vérifie si l'impact est dans l'intervalle de distance
     if (t < t_min || t > t_max) {
         return false;
     }
 
-    // Calcul du point d'intersection exact dans l'espace
+    // Calcul du point d'impact et de son décalage par rapport au centre
     Vector3f I = ray.getOrigin() + ray.getDirection() * t;
-    
-    // Vecteur allant du CENTRE (origin) vers le point d'intersection
     Vector3f V = I - origin;
 
-    // Projection de V sur les axes définis par width et height
+    // Coordonnées locales u et v par projection sur les axes
     float dot_w = V.dot(width);
     float dot_h = V.dot(height);
     float width_sq_len = width.dot(width);
     float height_sq_len = height.dot(height);
     
-    // Coordonnées paramétriques (u, v) normalisées
-    // u représente la position relative sur l'axe width
-    // v représente la position relative sur l'axe height
     float u = dot_w / width_sq_len;
     float v = dot_h / height_sq_len;
     
-    // LOGIQUE CENTRE :
-    // Puisque l'origine est au centre, le quad s'étend de -0.5 à +0.5 
-    // le long de ses axes de largeur et de hauteur.
+    // Le quad s'étend de -0.5 à 0.5 autour du centre
     if (std::abs(u) <= 0.5f && std::abs(v) <= 0.5f) {
-        // Remplissage de la structure HitInfo
         info.distance = t;
         info.point = I;
-        // On s'assure que la normale pointe vers le rayon incident (recto/verso)
+        
+        // Oriente la normale face au rayon (gestion recto-verso)
         if (ray.getDirection().dot(N) > 0) {
             info.normal = N * -1.0f;
         } else {

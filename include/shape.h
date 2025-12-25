@@ -40,7 +40,7 @@ public:
     Shape();
 
     /**
-     * @brief Constructeur paramétré.
+     * @brief Constructeur avec le matériau désiré.
      * @param matter_value Le matériau à assigner à la forme.
      */
     Shape(Material matter_value);
