@@ -1,8 +1,21 @@
+/**
+ * @file sdl_helper.cpp
+ * @brief Gestion de l'affichage graphique via la bibliothèque SDL2
+ * @author Jaiel Bilâl, Kalaivaasan Balakumar
+ * @date 2025
+ */
+
 #include "../include/sdl_helper.h"
 #include <iostream>
-#include <algorithm> // pour std::min
-#include <cmath>     // pour fmin
+#include <algorithm>
+#include <cmath>
 
+/**
+ * @brief Initialise la fenêtre et le moteur de rendu SDL.
+ * @param w Largeur de la fenêtre.
+ * @param h Hauteur de la fenêtre.
+ * @param title Titre de la fenêtre.
+ */
 SdlHelper::SdlHelper(int w, int h, const std::string& title) 
     : width(w), height(h), is_initialized(false) {
     
@@ -21,6 +34,9 @@ SdlHelper::SdlHelper(int w, int h, const std::string& title)
     is_initialized = true;
 }
 
+/**
+ * @brief Destructeur : libère les ressources SDL.
+ */
 SdlHelper::~SdlHelper() {
     if (is_initialized) {
         SDL_DestroyRenderer(renderer);
@@ -29,17 +45,20 @@ SdlHelper::~SdlHelper() {
     }
 }
 
+/**
+ * @brief Affiche le tampon de pixels à l'écran.
+ * @param buffer Vecteur de couleurs (Vector3f) représentant l'image.
+ */
 void SdlHelper::draw(const std::vector<Vector3f>& buffer) {
     if (!is_initialized) return;
 
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
-            // Index dans le tableau 1D
+            // Calcul de l'index linéaire dans le tampon de pixels
             int index = y * width + x;
             Vector3f color = buffer[index];
 
-            // Conversion float (0.0-1.0) vers int (0-255)
-            // On sature à 255 max pour éviter les bugs d'affichage
+            // Conversion et saturation des composantes (0.0-1.0 vers 0-255)
             int r = static_cast<int>(fmin(color.getX(), 1.0f) * 255);
             int g = static_cast<int>(fmin(color.getY(), 1.0f) * 255);
             int b = static_cast<int>(fmin(color.getZ(), 1.0f) * 255);
@@ -48,9 +67,13 @@ void SdlHelper::draw(const std::vector<Vector3f>& buffer) {
             SDL_RenderDrawPoint(renderer, x, y);
         }
     }
+    // Mise à jour effective de la fenêtre
     SDL_RenderPresent(renderer);
 }
 
+/**
+ * @brief Maintient la fenêtre ouverte jusqu'à la fermeture manuelle.
+ */
 void SdlHelper::waitForExit() {
     if (!is_initialized) return;
 
@@ -62,6 +85,6 @@ void SdlHelper::waitForExit() {
                 running = false;
             }
         }
-        SDL_Delay(50); // Petite pause pour ne pas surchauffer le CPU
+        SDL_Delay(50); // Limite l'usage CPU
     }
 }

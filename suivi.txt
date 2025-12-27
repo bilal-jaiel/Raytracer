@@ -8,8 +8,8 @@ include
     scene.h         logique : OK    commentaire : 
     shape.h         logique : OK    commentaire : OK
     sphere.h        logique : OK    commentaire : OK
-    vector3f.h      logique : OK    commentaire : 
-    sdl_helper.h    logique : OK    commentaire : 
+    vector3f.h      logique : OK    commentaire : OK (rien changé)
+    sdl_helper.h    logique : OK    commentaire : OK
 
 src
     camera.cpp      logique : OK    commentaire : OK
@@ -21,7 +21,7 @@ src
     scene.cpp       logique : OK    commentaire : 
     shape.cpp       logique : OK    commentaire : OK
     sphere.cpp      logique : OK    commentaire : OK
-    vector3f.cpp    logique : OK    commentaire : 
-    sdl_helper.cpp  logique : OK    commentaire : 
+    vector3f.cpp    logique : OK    commentaire : OK
+    sdl_helper.cpp  logique : OK    commentaire : OK
 
 **********oooooooooo 50%/100%
