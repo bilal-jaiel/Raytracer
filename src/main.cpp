@@ -15,64 +15,60 @@
 #include "../include/cube.h"
 #include "../include/sdl_helper.h"
 
-int main(int argc, char* argv[]) {
-    // 1. Configuration de l'image
+int main() {
+    // Définition des dimensions de la fenêtre et du fichier de sortie
     const int width = 800;
     const int height = 600;
     const std::string filename = "rendu_final.ppm";
 
     std::cout << "Initialisation de la scene..." << std::endl;
 
-    // 2. Création de la Caméra
-    // Positionnée à l'extérieur de la boîte (z=8), regardant vers l'intérieur (z=-1)
+    // Configuration de la caméra : placée en retrait sur l'axe Z pour englober la scène
     Camera cam(Vector3f(0.0f, 0.0f, 8.0f), Vector3f(0.0f, 0.0f, -1.0f));
 
-    // 3. Création de la Source de Lumière (placée vers le haut de la boîte)
-    // On définit une lumière ponctuelle via l'origine d'un Ray3f
+    // Définition de la source lumineuse comme un point situé en haut de la boîte
     Ray3f lightSource(Vector3f(0.0f, 4.5f, 0.0f), Vector3f(0.0f, -1.0f, 0.0f));
 
-    // 4. Initialisation de la Scène
+    // Initialisation du moteur de rendu avec la caméra et la lumière
     Scene scene(cam, lightSource);
 
-    // 5. Création des Matériaux
-    Material matWhite(0.8f, 0.8f, 0.8f, 0.0f);   // Murs mats
-    Material matRed(0.9f, 0.1f, 0.1f, 0.0f);     // Mur rouge
-    Material matGreen(0.1f, 0.9f, 0.1f, 0.0f);   // Mur vert
-    Material matMirror(1.0f, 1.0f, 1.0f, 0.6f);  // Sphère semi-miroir
-    Material matBlue(0.1f, 0.1f, 0.9f, 0.0f);    // Cube bleu
+    // Préparation de la palette de matériaux (couleurs mates, miroirs et plastiques)
+    Material matWhite(0.8f, 0.8f, 0.8f, 0.0f);   // Blanc neutre
+    Material matRed(0.9f, 0.1f, 0.1f, 0.0f);     // Rouge vif
+    Material matGreen(0.1f, 0.9f, 0.1f, 0.0f);   // Vert vif
+    Material matMirror(1.0f, 1.0f, 1.0f, 0.6f);  // Surface réfléchissante
+    Material matBlue(0.1f, 0.1f, 0.9f, 0.0f);    // Bleu profond
 
-    // 6. Ajout des 5 Quads pour former la boîte (Taille 10x10x10)
-    // Sol
-    scene.addShape(new Quad(Vector3f(0, -5, 0), Vector3f(10, 0, 0), Vector3f(0, 0, 10), matWhite));
-    // Plafond
-    scene.addShape(new Quad(Vector3f(0, 5, 0), Vector3f(10, 0, 0), Vector3f(0, 0, 10), matWhite));
-    // Mur du fond
-    scene.addShape(new Quad(Vector3f(0, 0, -5), Vector3f(10, 0, 0), Vector3f(0, 10, 0), matWhite));
-    // Mur gauche (Rouge)
-    scene.addShape(new Quad(Vector3f(-5, 0, 0), Vector3f(0, 0, 10), Vector3f(0, 10, 0), matRed));
-    // Mur droit (Vert)
-    scene.addShape(new Quad(Vector3f(5, 0, 0), Vector3f(0, 0, 10), Vector3f(0, 10, 0), matGreen));
+    // Construction de la "Cornell Box" en utilisant des Quads pour chaque mur
+    // On crée ainsi un espace clos de 10x10x10 unités
+    scene.addShape(new Quad(Vector3f(0, -5, 0), Vector3f(10, 0, 0), Vector3f(0, 0, 10), matWhite));  // Sol
+    scene.addShape(new Quad(Vector3f(0, 5, 0), Vector3f(10, 0, 0), Vector3f(0, 0, 10), matWhite));   // Plafond
+    scene.addShape(new Quad(Vector3f(0, 0, -5), Vector3f(10, 0, 0), Vector3f(0, 10, 0), matWhite));  // Fond
+    scene.addShape(new Quad(Vector3f(-5, 0, 0), Vector3f(0, 0, 10), Vector3f(0, 10, 0), matRed));    // Gauche
+    scene.addShape(new Quad(Vector3f(5, 0, 0), Vector3f(0, 0, 10), Vector3f(0, 10, 0), matGreen));   // Droite
 
-    // 7. Ajout de la Sphère et du Cube (objets internes)
-    // Une sphère un peu brillante
+    // Placement des objets d'intérêt à l'intérieur de la boîte
+    // Une sphère avec un fort coefficient de réflexion pour tester les miroirs
     scene.addShape(new Sphere(2.0f, Vector3f(-2.0f, -3.0f, -2.0f), matMirror));
 
-    // Un cube bleu tourné (en utilisant ton constructeur de Cube)
-    // Note : On utilise des vecteurs unitaires pour l'orientation
+    // Un cube bleu avec une orientation personnalisée pour tester la géométrie complexe
     scene.addShape(new Cube(Vector3f(2.0f, -3.5f, 1.0f), 3.0f, matBlue, 
                             Vector3f(1.0f, 0.0f, 1.0f), Vector3f(0.0f, 1.0f, 0.0f)));
 
-    // 8. Calcul du rendu
+    // Lancement du calcul de lancer de rayon et stockage des résultats dans le buffer
     std::vector<Vector3f> imageBuffer;
     scene.render(width, height, filename, imageBuffer);
 
-    // 9. Affichage SDL
+    // Phase finale : affichage du rendu dans une fenêtre SDL
     try {
         SdlHelper sdl(width, height, "Projet PAP - Lancer de Rayon");
         sdl.draw(imageBuffer);
+        
         std::cout << "Affichage reussi. Fermez la fenetre pour quitter." << std::endl;
         sdl.waitForExit();
+        
     } catch (const std::exception& e) {
+        // Gestion des erreurs liées à l'initialisation du système graphique
         std::cerr << "Erreur SDL : " << e.what() << std::endl;
         return 1;
     }
