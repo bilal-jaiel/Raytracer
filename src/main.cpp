@@ -15,7 +15,7 @@
 #include "../include/cube.h"
 #include "../include/sdl_helper.h"
 
-int main() {
+int main(int argc, char* argv[]) {
     // Définition des dimensions de la fenêtre et du fichier de sortie
     const int width = 800;
     const int height = 600;
