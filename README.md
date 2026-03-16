@@ -4,7 +4,7 @@
 
 ![C++](https://img.shields.io/badge/C++-17-blue?logo=cplusplus) ![SDL2](https://img.shields.io/badge/SDL2-2.x-orange) ![License](https://img.shields.io/badge/license-MIT-green)
 
-**Authors:** Bilâl Jaiel & Kalaivaasan Balakumar — ENSIIE 2A, Promotion 2027
+**Authors:** Bilâl Jaiel & Kalaivaasan Balakumar
 
 ---
 
