@@ -1,0 +1,14 @@
+# Build outputs
+prog
+prog.exe
+*.o
+*.dll
+
+# Rendered frames
+*.ppm
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
