@@ -11,7 +11,7 @@ Ray-object intersection, Lambertian shading, hard shadows and recursive mirror r
 
 <img src="docs/render.png" width="80%" alt="Cornell Box rendered by the program">
 
-<sub>Cornell Box, 800 × 600: mirror sphere, rotated cube, hard shadows and up to 5 reflection bounces.<br>This image is the exact output of the code in this repository.</sub>
+<sub>Cornell Box, 800 × 600: mirror sphere, rotated cube, hard shadows and up to 4 reflection bounces.<br>This image is the exact output of the code in this repository.</sub>
 
 </div>
 
@@ -43,8 +43,8 @@ Ray-object intersection, Lambertian shading, hard shadows and recursive mirror r
 | Scene | Every primitive derives from an abstract `Shape` class, so the scene handles all objects uniformly |
 | Shading | Lambertian diffuse `I = I_source · max(0, N·L)` plus a constant ambient term |
 | Shadows | A shadow ray is cast from each hit point toward the point light |
-| Reflections | `R = D − 2(D·N)N`, up to 5 bounces, blended with the local colour by the material's reflectivity |
-| Robustness | Secondary rays start at `P + ε·N` with `ε = 1e-4` to avoid shadow acne |
+| Reflections | `R = D − 2(D·N)N`, recursion depth 5 (up to 4 bounces), blended with the local colour by the material's reflectivity |
+| Robustness | Secondary rays are offset by `ε = 1e-4` (reflected rays along the normal, shadow rays towards the light) to avoid shadow acne |
 | Orientation | Rodrigues' rotation formula instead of 4 × 4 matrices |
 | Output | PPM file (`rendu_final.ppm`) and live SDL2 window |
 
